@@ -70,7 +70,7 @@ Since the map tiles have a maximum resolution further increasing the zoom only i
 mapshot(map, 
         file = map_filename,
         vwidth = 1000,
-        vheight = 700,
+        vheight = 720,
         zoom = 8)  # zoom adjusts rendering resolution
 ```
 
@@ -99,42 +99,4 @@ ggsave(elevation_profile_filename,
        height = 2,
        units = "cm",
        dpi = 900)
-```
-
-```{r}
-# token <- "pk.eyJ1IjoibWhhcnRlbmJlcmdlciIsImEiOiJjbTQ5MTkzOGIwNHZzMnJyNmNsY2syd2c5In0.Mx_-oSGPULm8nYC4wdGE9w"
-# my_map <- leaflet() |>
-#   addMapboxTiles(
-#   style_id = 'dark-v11',
-#   username = 'mapbox',
-#   scaling_factor = "2x",
-#   access_token = token,
-#   attribution = FALSE
-# ) |>
-#   addPolylines(data = gpx_track, color = "#FC5200", weight = 4, opacity = 1, smoothFactor = 1) 
-#   # fitBounds(bboxPadded[[1]], bboxPadded[[2]], bboxPadded[[3]], bboxPadded[[4]])
-# 
-# my_map
-```
-
-```{r}
-# library(mapboxapi)
-# # Get Stadia map as base map
-# register_stadiamaps(key = "6f1532a3-ef05-4f34-a381-165cc5640b75")
-# backgroundMap <- get_stadiamap(bboxPadded,
-#   zoom = zoom_level, maptype="stamen_toner_lite", crop = TRUE)
-# 
-# # Plot the map with GPX track
-# map <- ggmap(backgroundMap) +
-#   lapply(seq_len(nrow(gpx_track)), function(i) {
-#     seg <- gpx_track[i, ]
-#     seg_df <- st_coordinates(seg)
-#     seg_df <- data.frame(lon = seg_df[, "X"], lat = seg_df[, "Y"])
-#     geom_path(data = seg_df, aes(x = lon, y = lat), color = "#FC5200", size = 0.7, alpha = 1)
-#   }) +
-#   theme_void() +  # Remove background, axis, and grid
-#   theme(legend.position = "none")  # Hide legend
-# 
-# # map
-# ggsave("gpx_map_plot.pdf", plot = map, device = "pdf", dpi = 600)
 ```
