@@ -19,11 +19,11 @@ Only with `stamen` style maps the track can be plotted below the map labels.
 gpx_file <- "gpx_files/Ligurien.gpx"
 
 # set filenames for images that are created
-map_filename <- "figures/ligurien_map_terrain.png"
+map_filename <- "figures/ligurien_map_dark.png"
 elevation_profile_filename <- "figures/ligurien_elevation.png"
 
 # set map properties
-map_style <- "stamen_toner_lite"
+map_style <- "stamen_toner"
 start_end_markers <- FALSE
 track_color <- "#FC5200"
 
@@ -70,7 +70,7 @@ Since the map tiles have a maximum resolution further increasing the zoom only i
 mapshot(map, 
         file = map_filename,
         vwidth = 1000,
-        vheight = 1400,
+        vheight = 700,
         zoom = 8)  # zoom adjusts rendering resolution
 ```
 

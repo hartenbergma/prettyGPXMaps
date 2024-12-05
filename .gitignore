@@ -8,6 +8,8 @@
 figures/*
 !skandinavien_elevation.png
 !skandinavien_map.png
+!ligurien_map_dark.png
 
 gpx_files/*
 !Skandinavien_Tour.gpx
+!Ligurien.gpx

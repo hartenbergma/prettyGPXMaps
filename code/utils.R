@@ -84,7 +84,7 @@ addStartEndMarkers <- function(map, gpx_track, color) {
       fillColor = "white",
       fillOpacity = 1
     )
-  return
+  return(map)
 }
 
 setViewToGpx <- function(map, gpx_track) {
