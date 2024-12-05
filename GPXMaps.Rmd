@@ -1,0 +1,140 @@
+---
+title: "pretty GPX Maps"
+output: prettyGPXMaps
+---
+
+```{r}
+source("setup_libraries.R")
+source("code/utils.R")
+```
+
+## Settings
+
+Possible map styles: *`stamen_toner_lite, stamen_toner, stamen_terrain, alidade_smooth, alidade_smooth_dark`*
+
+Only with `stamen` style maps the track can be plotted below the map labels.
+
+```{r}
+# input file
+gpx_file <- "gpx_files/Ligurien.gpx"
+
+# set filenames for images that are created
+map_filename <- "figures/ligurien_map_terrain.png"
+elevation_profile_filename <- "figures/ligurien_elevation.png"
+
+# set map properties
+map_style <- "stamen_toner_lite"
+start_end_markers <- FALSE
+track_color <- "#FC5200"
+
+# set color for elevation profile plot
+elevation_profile_color <- "#FC5200"
+
+# Stadia Maps API key (https://docs.stadiamaps.com/authentication/#api-keys)
+stadiamaps_api_key <- Sys.getenv("STADIAMAPS_API_KEY")
+```
+
+Load input GPX data
+
+```{r}
+gpx_track <- st_read(gpx_file, layer = "tracks", quiet = TRUE)
+```
+
+## Create Map
+
+```{r}
+map <- leaflet() |>
+  addMapPane("base", zIndex = 400) |>
+  addMapPane("track", zIndex = 500) |>
+  addMapPane("labels", zIndex = 600) |>
+  
+  addStadiaMap(map_style, stadiamaps_api_key, pane = "base") |>
+  addPolylines(data = gpx_track, color = track_color, weight = 4, opacity = 1, smoothFactor = 1, options = pathOptions(pane = "track")) |>
+  addStadiaMapLabels(map_style, stadiamaps_api_key, pane = "labels") |>
+  setViewToGpx(gpx_track)
+  
+if (start_end_markers) {
+  map <- addStartEndMarkers(map, gpx_track, track_color)
+}
+
+map
+```
+
+#### Save screenshot of map
+
+Width and height might need to be adjusted based on the track shape.
+
+Since the map tiles have a maximum resolution further increasing the zoom only improves the resolution the track is rendered at.
+
+```{r}
+mapshot(map, 
+        file = map_filename,
+        vwidth = 1000,
+        vheight = 1400,
+        zoom = 8)  # zoom adjusts rendering resolution
+```
+
+## Elevation profile
+
+```{r}
+gpx_data_ele <- st_read(gpx_file, layer = "track_points", quiet = TRUE)
+gpx_data_subset <- gpx_data_ele[round(seq(1, nrow(gpx_data_ele), length.out = 1000)), ]
+base_level <- max(gpx_data_subset$ele)/25
+
+elevation_plot <- ggplot(data = gpx_data_subset) +
+  geom_area(aes(x = 1:nrow(gpx_data_subset), y = ele + base_level),
+            fill = elevation_profile_color,
+            alpha = 1) +
+  theme_void()
+
+elevation_plot
+```
+
+Save elevation profile
+
+```{r}
+ggsave(elevation_profile_filename,
+       plot = elevation_plot,
+       width = 20,
+       height = 2,
+       units = "cm",
+       dpi = 900)
+```
+
+```{r}
+# token <- "pk.eyJ1IjoibWhhcnRlbmJlcmdlciIsImEiOiJjbTQ5MTkzOGIwNHZzMnJyNmNsY2syd2c5In0.Mx_-oSGPULm8nYC4wdGE9w"
+# my_map <- leaflet() |>
+#   addMapboxTiles(
+#   style_id = 'dark-v11',
+#   username = 'mapbox',
+#   scaling_factor = "2x",
+#   access_token = token,
+#   attribution = FALSE
+# ) |>
+#   addPolylines(data = gpx_track, color = "#FC5200", weight = 4, opacity = 1, smoothFactor = 1) 
+#   # fitBounds(bboxPadded[[1]], bboxPadded[[2]], bboxPadded[[3]], bboxPadded[[4]])
+# 
+# my_map
+```
+
+```{r}
+# library(mapboxapi)
+# # Get Stadia map as base map
+# register_stadiamaps(key = "6f1532a3-ef05-4f34-a381-165cc5640b75")
+# backgroundMap <- get_stadiamap(bboxPadded,
+#   zoom = zoom_level, maptype="stamen_toner_lite", crop = TRUE)
+# 
+# # Plot the map with GPX track
+# map <- ggmap(backgroundMap) +
+#   lapply(seq_len(nrow(gpx_track)), function(i) {
+#     seg <- gpx_track[i, ]
+#     seg_df <- st_coordinates(seg)
+#     seg_df <- data.frame(lon = seg_df[, "X"], lat = seg_df[, "Y"])
+#     geom_path(data = seg_df, aes(x = lon, y = lat), color = "#FC5200", size = 0.7, alpha = 1)
+#   }) +
+#   theme_void() +  # Remove background, axis, and grid
+#   theme(legend.position = "none")  # Hide legend
+# 
+# # map
+# ggsave("gpx_map_plot.pdf", plot = map, device = "pdf", dpi = 600)
+```
