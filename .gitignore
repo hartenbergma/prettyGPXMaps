@@ -10,6 +10,8 @@ figures/*
 !skandinavien_map.png
 !ligurien_map_terrain.png
 !triathlon_karlsfeld.png
+!prettyGPXposter_examples.fig
+!prettyGPXposter_examples.pdf
 
 gpx_files/*
 !Skandinavien_Tour.gpx
