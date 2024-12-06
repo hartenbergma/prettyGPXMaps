@@ -1,0 +1,66 @@
+---
+title: "pretty GPX Maps"
+output: prettyGPXMaps
+---
+
+```{r}
+source("setup_libraries.R")
+source("code/utils.R")
+```
+
+## Settings
+
+The map is created based on a single .gpx file. To visualize the combined track of multiple GPX files the merge function of [gpx studio](https://gpx.studio/app) can be used to obtain a single file. If the setting to keep the traces disconnected is used for merging, each sub-track of the merged file can be colored differently, by assigning a vector of colors to `track_colors`.
+
+Possible map styles: `stamen_toner_lite, stamen_toner, stamen_terrain, alidade_smooth, alidade_smooth_dark` (Note: only with the `'stamen'` style maps the track can be plotted below the map labels)
+
+```{r}
+# input file
+gpx_file <- "gpx_files/Karlsfelder_Triathlon.gpx"
+
+# set filename for map that is created
+map_filename <- "figures/triathlon_karlsfeld.png"
+
+# set map properties
+map_style <- "stamen_toner"
+start_end_markers <- FALSE
+# colors for swim, transition 1, bike, transition 2, run
+track_colors <- c("#007AFF", "#000000", "#34C759", "#000000", "#FF2D55")  
+
+# Stadia Maps API key (https://docs.stadiamaps.com/authentication/#api-keys)
+stadiamaps_api_key <- Sys.getenv("STADIAMAPS_API_KEY")
+```
+
+Load input GPX data
+
+```{r}
+gpx_track <- st_read(gpx_file, layer = "tracks", quiet = TRUE)
+```
+
+## Create Map
+
+```{r}
+map <- leaflet() |>
+  addMapPane("base", zIndex = 400) |>
+  addMapPane("track", zIndex = 500) |>
+  addMapPane("labels", zIndex = 600) |>
+  
+  addStadiaMap(map_style, stadiamaps_api_key, pane = "base") |>
+  addGpxTracks(gpx_track, track_colors, weight = 4, start_end_markers = start_end_markers, pane = "track") |>
+  addStadiaMapLabels(map_style, stadiamaps_api_key, pane = "labels") |>
+  setViewToGpx(gpx_track, zoom_offset = 0)  # set zoom_offset to get less/more detailed map
+
+map
+```
+
+#### Save screenshot of map
+
+Width and height might need to be adjusted based on the track shape. Since the map tiles have a maximum resolution further increasing the zoom only improves the resolution the track is rendered at.
+
+```{r}
+mapshot(map, 
+        file = map_filename,
+        vwidth = 1000,
+        vheight = 500,
+        zoom = 8)  # zoom adjusts rendering resolution
+```

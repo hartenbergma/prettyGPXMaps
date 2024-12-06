@@ -3,6 +3,7 @@ required_packages <- c(
   "leaflet",
   "mapview",
   "sf",
+  "checkmate",
   "ggplot2"
   # "ggmap",
   # "geosphere",

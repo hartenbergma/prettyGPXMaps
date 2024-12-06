@@ -7,44 +7,15 @@ calculate_zoom <- function(bbox) {
   max_diff <- max(lon_diff, lat_diff)
   
   # Rough zoom level calculation
-  # You might need to adjust this based on your specific needs
-  zoom <- floor(log2(360 / max_diff))
+  zoom <- floor(log2(360 / max_diff)) +2
   
   # Ensure zoom is within reasonable bounds
   return(max(min(zoom, 18), 3))
 }
 
-addStartEndMarkers <- function(map, gpx_track, color) {
-  track_coords <- st_coordinates(gpx_track$geometry)
-  start_point <- head(track_coords, 1)[1:2]
-  end_point <- tail(track_coords, 1)[1:2]
-  map <- map |>
-    addCircleMarkers(
-      lng = start_point[1],
-      lat = start_point[2],
-      radius = 6,
-      weight = 4,
-      color = track_color,
-      opacity = 1,
-      fillColor = track_color,
-      fillOpacity = 1
-    ) |>
-    addCircleMarkers(
-      lng = end_point[1],
-      lat = end_point[2],
-      radius = 6,
-      weight = 4,
-      color = track_color,
-      opacity = 1,
-      fillColor = "white",
-      fillOpacity = 1
-    )
-  return(map)
-}
-
-setViewToGpx <- function(map, gpx_track) {
+setViewToGpx <- function(map, gpx_track, zoom_offset = 0) {
   bbox <- st_bbox(gpx_track)
-  zoom_level <- calculate_zoom(bbox) + 2
+  zoom_level <- calculate_zoom(bbox) + zoom_offset
   map <- setView(
     map,
     lng = (bbox[[1]] + bbox[[3]]) / 2,
@@ -56,7 +27,7 @@ setViewToGpx <- function(map, gpx_track) {
 
 # For the stamen style maps the labels can be loaded seprately
 # to be overlayed on the gpx track
-addStadiaMapLabels <- function(map, map_style, apikey, pane = NA) {
+addStadiaMapLabels <- function(map, map_style, apikey, pane = NULL) {
   if (grepl("stamen", map_style)) {
     if (grepl("stamen_toner", map_style)) {
       label_style <- "stamen_toner_labels"
@@ -69,16 +40,62 @@ addStadiaMapLabels <- function(map, map_style, apikey, pane = NA) {
 }
 
 # https://docs.stadiamaps.com/maps-for-web/
-addStadiaMap <- function(map_widget, map_style, apikey, pane = NA) {
-  if (is.na(pane)) {
-    options <- tileOptions(variant = map_style, apikey = stadiamaps_api_key)
-  } else {
-    options <- tileOptions(variant = map_style, apikey = stadiamaps_api_key, pane = pane)
-  }
+addStadiaMap <- function(map_widget, map_style, apikey, pane = NULL) {
   map <- addTiles(
     map_widget,
     urlTemplate = "https://tiles.stadiamaps.com/tiles/{variant}/{z}/{x}/{y}@2x.png?api_key={apikey}",
     attribution = FALSE,
-    options = options
+    options = tileOptions(variant = map_style, apikey = stadiamaps_api_key, pane = pane)
   )
 }
+
+addGpxTracks <- function(map, gpx_track, colors, weight = 4, start_end_markers = FALSE, pane = NULL) {
+  for (i in seq_len(nrow(gpx_track))) {
+    color <- colors[[(i - 1) %% length(colors) + 1]]
+    track_section <- gpx_track[i, ]
+    map <- addPolylines(map, data = track_section, color = color, weight = weight, opacity = 1, smoothFactor = 1, options = tileOptions(pane = pane))
+    
+    if(start_end_markers) {
+      if (i == 1) map <- addStartMarker(map, track_section, color, pane = pane)
+      if (i == nrow(gpx_track)) map <- addEndMarker(map, track_section, color, pane = pane)
+    }
+  }
+  return(map)
+}
+
+addStartMarker <- function(map, gpx_track, color, pane = NULL) {
+  track_coords <- st_coordinates(gpx_track$geometry)
+  start_point <- head(track_coords, 1)[1:2]
+  map <- addCircleMarkers(
+      map,
+      lng = start_point[[1]],
+      lat = start_point[[2]],
+      radius = 4,
+      weight = 4,
+      color = color,
+      opacity = 1,
+      fillColor = color,
+      fillOpacity = 1,
+      options = markerOptions(pane = pane)
+    )
+  return(map)
+}
+
+addEndMarker <- function(map, gpx_track, color, pane = NULL) {
+  track_coords <- st_coordinates(gpx_track$geometry)
+  end_point <- tail(track_coords, 1)[1:2]
+  map <- addCircleMarkers(
+      map,
+      lng = end_point[[1]],
+      lat = end_point[[2]],
+      radius = 5,
+      weight = 4,
+      color = color,
+      opacity = 1,
+      fillColor = "white",
+      fillOpacity = 1,
+      options = markerOptions(pane = pane)
+    )
+  return(map)
+}
+

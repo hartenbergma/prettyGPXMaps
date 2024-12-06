@@ -6,13 +6,16 @@ output: prettyGPXMaps
 ```{r}
 source("setup_libraries.R")
 source("code/utils.R")
+
+# Stadia Maps API key (https://docs.stadiamaps.com/authentication/#api-keys)
+stadiamaps_api_key <- Sys.getenv("STADIAMAPS_API_KEY")
 ```
 
 ## Settings
 
-Possible map styles: *`stamen_toner_lite, stamen_toner, stamen_terrain, alidade_smooth, alidade_smooth_dark`*
+The map is created based on a single .gpx file. To visualize the combined track of multiple GPX files the merge function of [gpx studio](https://gpx.studio/app) can be used to obtain a single file. If the setting to keep the traces disconnected is used for merging, each sub-track of the merged file can be colored differently, by assigning a vector of colors to `track_colors` (see *GPXMapsMulticolor.RMD*).
 
-Only with `stamen` style maps the track can be plotted below the map labels.
+Possible map styles: `stamen_toner_lite, stamen_toner, stamen_terrain, alidade_smooth, alidade_smooth_dark` (Note: only with the `'stamen'` style maps the track can be plotted below the map labels)
 
 ```{r}
 # input file
@@ -25,13 +28,10 @@ elevation_profile_filename <- "figures/ligurien_elevation.png"
 # set map properties
 map_style <- "stamen_toner"
 start_end_markers <- FALSE
-track_color <- "#FC5200"
+track_colors <- "#FC5200"
 
 # set color for elevation profile plot
 elevation_profile_color <- "#FC5200"
-
-# Stadia Maps API key (https://docs.stadiamaps.com/authentication/#api-keys)
-stadiamaps_api_key <- Sys.getenv("STADIAMAPS_API_KEY")
 ```
 
 Load input GPX data
@@ -49,13 +49,9 @@ map <- leaflet() |>
   addMapPane("labels", zIndex = 600) |>
   
   addStadiaMap(map_style, stadiamaps_api_key, pane = "base") |>
-  addPolylines(data = gpx_track, color = track_color, weight = 4, opacity = 1, smoothFactor = 1, options = pathOptions(pane = "track")) |>
+  addGpxTracks(gpx_track, track_colors, weight = 4, start_end_markers = start_end_markers, pane = "track") |>
   addStadiaMapLabels(map_style, stadiamaps_api_key, pane = "labels") |>
-  setViewToGpx(gpx_track)
-  
-if (start_end_markers) {
-  map <- addStartEndMarkers(map, gpx_track, track_color)
-}
+  setViewToGpx(gpx_track, zoom_offset = 0)  # set zoom_offset to get less/more detailed map
 
 map
 ```
@@ -74,7 +70,7 @@ mapshot(map,
         zoom = 8)  # zoom adjusts rendering resolution
 ```
 
-## Elevation profile
+## Create Elevation profile
 
 ```{r}
 gpx_data_ele <- st_read(gpx_file, layer = "track_points", quiet = TRUE)
@@ -90,7 +86,7 @@ elevation_plot <- ggplot(data = gpx_data_subset) +
 elevation_plot
 ```
 
-Save elevation profile
+#### Save elevation profile
 
 ```{r}
 ggsave(elevation_profile_filename,
