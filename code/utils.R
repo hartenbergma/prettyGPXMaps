@@ -1,32 +1,15 @@
-calculate_zoom <- function(bbox) {
-  # Calculate the difference in longitude and latitude
-  lon_diff <- bbox["xmax"] - bbox["xmin"]
-  lat_diff <- bbox["ymax"] - bbox["ymin"]
-  
-  # Convert to degrees
-  max_diff <- max(lon_diff, lat_diff)
-  
-  # Rough zoom level calculation
-  zoom <- floor(log2(360 / max_diff)) +2
-  
-  # Ensure zoom is within reasonable bounds
-  return(max(min(zoom, 18), 3))
-}
-
-setViewToGpx <- function(map, gpx_track, zoom_offset = 0) {
-  bbox <- st_bbox(gpx_track)
-  zoom_level <- calculate_zoom(bbox) + zoom_offset
-  map <- setView(
-    map,
-    lng = (bbox[[1]] + bbox[[3]]) / 2,
-    lat = (bbox[[2]] + bbox[[4]]) / 2,
-    zoom = zoom_level  # zoom adjusts tile level
+# Load interactive raster map from Stamen Toner (See https://docs.stadiamaps.com/maps-for-web/)
+addStadiaMap <- function(map_widget, map_style, apikey, pane = NULL) {
+  map <- addTiles(
+    map_widget,
+    urlTemplate = "https://tiles.stadiamaps.com/tiles/{variant}/{z}/{x}/{y}@2x.png?api_key={apikey}",
+    attribution = FALSE,
+    options = tileOptions(variant = map_style, apikey = stadiamaps_api_key, pane = pane)
   )
-  return(map)
 }
 
-# For the stamen style maps the labels can be loaded seprately
-# to be overlayed on the gpx track
+# For the stamen style maps the labels can be loaded separately to be overlaid on the plotted track
+# (See section "Raster Layer Groups": https://docs.stadiamaps.com/map-styles/stamen-toner/)
 addStadiaMapLabels <- function(map, map_style, apikey, pane = NULL) {
   if (grepl("stamen", map_style)) {
     if (grepl("stamen_toner", map_style)) {
@@ -37,16 +20,6 @@ addStadiaMapLabels <- function(map, map_style, apikey, pane = NULL) {
     map <- addStadiaMap(map, label_style, apikey, pane)
   }
   return(map)
-}
-
-# https://docs.stadiamaps.com/maps-for-web/
-addStadiaMap <- function(map_widget, map_style, apikey, pane = NULL) {
-  map <- addTiles(
-    map_widget,
-    urlTemplate = "https://tiles.stadiamaps.com/tiles/{variant}/{z}/{x}/{y}@2x.png?api_key={apikey}",
-    attribution = FALSE,
-    options = tileOptions(variant = map_style, apikey = stadiamaps_api_key, pane = pane)
-  )
 }
 
 addGpxTracks <- function(map, gpx_track, colors, weight = 4, start_end_markers = FALSE, pane = NULL) {
@@ -99,3 +72,31 @@ addEndMarker <- function(map, gpx_track, color, pane = NULL) {
   return(map)
 }
 
+# estimate an appropriate zoom level for the map based on the boundig box of the displayed track
+calculate_zoom <- function(bbox) {
+  # Calculate the difference in longitude and latitude
+  lon_diff <- bbox["xmax"] - bbox["xmin"]
+  lat_diff <- bbox["ymax"] - bbox["ymin"]
+  
+  # Convert to degrees
+  max_diff <- max(lon_diff, lat_diff)
+  
+  # Rough zoom level calculation
+  zoom <- floor(log2(360 / max_diff)) +2
+  
+  # Ensure zoom is within reasonable bounds
+  return(max(min(zoom, 18), 3))
+}
+
+# set map center and zoom level to appropriate values for the displayed track
+setViewToGpx <- function(map, gpx_track, zoom_offset = 0) {
+  bbox <- st_bbox(gpx_track)
+  zoom_level <- calculate_zoom(bbox) + zoom_offset
+  map <- setView(
+    map,
+    lng = (bbox[[1]] + bbox[[3]]) / 2,
+    lat = (bbox[[2]] + bbox[[4]]) / 2,
+    zoom = zoom_level  # zoom adjusts tile level
+  )
+  return(map)
+}
