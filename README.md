@@ -14,4 +14,4 @@ To access the maps a (free) personal API key has to be used. You can obtain one 
 
 ## Poster Templates
 
-The [Figma](https://www.figma.com) file used to create the example posters shown at the top can be found in the figures folder ([prettyGPXposter_examples.fig](./figures/prettyGPXposter_examples.fig))
+The [Figma](https://www.figma.com) file used to create the example posters shown at the top can be found in the [figures](./figures/) folder (`prettyGPXposter_examples.fig`)
